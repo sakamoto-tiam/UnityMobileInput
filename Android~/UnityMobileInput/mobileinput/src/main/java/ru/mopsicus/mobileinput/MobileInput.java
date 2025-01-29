@@ -9,6 +9,7 @@ package ru.mopsicus.mobileinput;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.Typeface;
+import android.os.Build;
 import android.text.Editable;
 import android.text.InputType;
 import android.text.TextWatcher;
@@ -18,6 +19,7 @@ import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.autofill.AutofillManager;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
@@ -173,6 +175,9 @@ public class MobileInput {
                     break;
                 case "EmailAddress":
                     editInputType |= InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS;
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        edit.setAutofillHints(View.AUTOFILL_HINT_EMAIL_ADDRESS);
+                    }
                     break;
                 case "Password":
                     editInputType |= InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD;
@@ -202,6 +207,9 @@ public class MobileInput {
                             break;
                         case "EmailAddress":
                             editInputType = InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS;
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                edit.setAutofillHints(View.AUTOFILL_HINT_EMAIL_ADDRESS);
+                            }
                             break;
                         case "Social":
                             editInputType = InputType.TYPE_TEXT_VARIATION_URI | InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS;
@@ -296,6 +304,16 @@ public class MobileInput {
             edit.setOnFocusChangeListener(new View.OnFocusChangeListener() {
                 @Override
                 public void onFocusChange(View v, boolean isFocus) {
+                    if (isFocus) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            if ((edit.getInputType() & InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS) != 0) { 
+                                AutofillManager autofillManager = Plugin.activity.getSystemService(AutofillManager.class);
+                                if (autofillManager != null) {
+                                    autofillManager.requestAutofill(edit);
+                                }
+                            }
+                        }
+                    }
                     if (!isFocus) {
                         JSONObject data = new JSONObject();
                         try {
